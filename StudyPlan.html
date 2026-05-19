@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Infrastructure Summer Roadmap — 12 Weeks</title>
+<style>
+  :root {
+    --bg:#f9f8f6; --surface:#ffffff; --surface2:#f4f3f0; --surface3:#e8e7e3;
+    --border:rgba(0,0,0,0.1); --border-md:rgba(0,0,0,0.22);
+    --text:#1a1917; --text2:#6b6a67; --text3:#9b9a97;
+    --purple:#7F77DD; --purple-bg:#EEEDFE; --purple-text:#3C3489;
+    --teal:#1D9E75; --teal-bg:#E1F5EE; --teal-text:#085041;
+    --blue:#378ADD; --blue-bg:#E6F1FB; --blue-text:#0C447C;
+    --coral:#D85A30; --coral-bg:#FAECE7; --coral-text:#993C1D;
+    --green:#639922; --green-bg:#EAF3DE; --green-text:#3B6D11;
+    --amber:#BA7517; --amber-bg:#FAEEDA; --amber-text:#854F0B;
+    --pink:#D4537E; --pink-bg:#FBEAF0; --pink-text:#72243E;
+    --orange:#C05C10; --orange-bg:#FDF0E6; --orange-text:#8B3A08;
+    --success-bg:#EAF3DE; --success-border:#97C459; --success-text:#3B6D11;
+    --radius:10px; --radius-sm:7px;
+    --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  }
+  @media(prefers-color-scheme:dark){
+    :root{
+      --bg:#141412; --surface:#1e1d1b; --surface2:#252422; --surface3:#2e2d2a;
+      --border:rgba(255,255,255,0.1); --border-md:rgba(255,255,255,0.22);
+      --text:#f0ede8; --text2:#a09e9a; --text3:#6b6967;
+      --purple-bg:#26215C; --purple-text:#AFA9EC;
+      --teal-bg:#04342C; --teal-text:#5DCAA5;
+      --blue-bg:#042C53; --blue-text:#85B7EB;
+      --coral-bg:#4A1B0C; --coral-text:#F0997B;
+      --green-bg:#173404; --green-text:#97C459;
+      --amber-bg:#412402; --amber-text:#EF9F27;
+      --pink-bg:#4B1528; --pink-text:#ED93B1;
+      --orange-bg:#3D1A05; --orange-text:#E08040;
+      --success-bg:#173404; --success-border:#3B6D11; --success-text:#97C459;
+    }
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh;}
+
+  .app{display:flex;min-height:100vh;}
+  .sidebar{width:268px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:22px 14px;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
+  .main{flex:1;padding:32px 40px;max-width:920px;}
+
+  .sidebar-logo{font-size:13px;font-weight:600;color:var(--text);margin-bottom:18px;padding:0 8px;display:flex;align-items:center;gap:8px;}
+  .sidebar-logo .logo-icon{font-size:17px;}
+  .sidebar-cert{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--border);margin-bottom:10px;}
+  .cert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .cert-label{font-size:12px;color:var(--text2);flex:1;}
+  .cert-status{font-size:11px;font-weight:600;padding:1px 6px;border-radius:99px;}
+  .cert-pending{background:var(--surface3);color:var(--text3);}
+  .cert-done{background:var(--success-bg);color:var(--success-text);}
+  .sidebar-section{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);padding:10px 8px 5px;}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s;border:none;background:none;width:100%;text-align:left;}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:var(--surface2);color:var(--text);font-weight:500;}
+  .nav-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .nav-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:99px;background:var(--surface2);color:var(--text3);}
+  .nav-badge.done-badge{background:var(--success-bg);color:var(--success-text);}
+
+  .stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:26px;}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
+  .stat-val{font-size:21px;font-weight:600;color:var(--text);line-height:1;}
+  .stat-lbl{font-size:12px;color:var(--text2);margin-top:4px;}
+
+  .cert-strip{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:26px;}
+  .cert-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:14px;}
+  .cert-card-icon{font-size:26px;flex-shrink:0;}
+  .cert-card-name{font-size:13px;font-weight:500;color:var(--text);}
+  .cert-card-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+  .cert-card-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;margin-top:5px;display:inline-block;}
+  .badge-pending{background:var(--surface2);color:var(--text3);}
+  .badge-done{background:var(--success-bg);color:var(--success-text);}
+
+  .page-header{margin-bottom:26px;}
+  .page-title{font-size:22px;font-weight:600;color:var(--text);}
+  .page-sub{font-size:14px;color:var(--text2);margin-top:4px;}
+
+  .phase-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;padding:3px 9px;border-radius:99px;display:inline-block;margin-bottom:10px;}
+
+  .week-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px;}
+  .week-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow);}
+  .week-card:hover{border-color:var(--border-md);box-shadow:0 2px 8px rgba(0,0,0,.08);}
+  .week-card.selected{border-color:var(--purple);}
+  .week-card.done-card{background:var(--success-bg);border-color:var(--success-border);}
+  .wc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
+  .wc-num{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+  .wc-title{font-size:13px;font-weight:500;color:var(--text);line-height:1.35;margin-bottom:9px;}
+  .tag{display:inline-flex;align-items:center;font-size:10px;padding:2px 7px;border-radius:99px;font-weight:600;margin-bottom:8px;letter-spacing:.02em;}
+  .tag-clf{background:var(--coral-bg);color:var(--coral-text);}
+  .tag-mla{background:var(--orange-bg);color:var(--orange-text);}
+  .tag-cpp{background:var(--blue-bg);color:var(--blue-text);}
+  .tag-linux{background:var(--green-bg);color:var(--green-text);}
+  .tag-cuda{background:var(--purple-bg);color:var(--purple-text);}
+  .tag-ai{background:var(--amber-bg);color:var(--amber-text);}
+  .tag-portfolio{background:var(--pink-bg);color:var(--pink-text);}
+  .progress-wrap{background:var(--surface2);border-radius:99px;height:4px;overflow:hidden;margin-top:6px;}
+  .progress-fill{height:4px;border-radius:99px;transition:width .4s ease;}
+  .fill-clf{background:var(--coral);}
+  .fill-mla{background:var(--orange);}
+  .fill-cpp{background:var(--blue);}
+  .fill-linux{background:var(--green);}
+  .fill-cuda{background:var(--purple);}
+  .fill-ai{background:var(--amber);}
+  .fill-portfolio{background:var(--pink);}
+  .wc-progress-label{font-size:11px;color:var(--text3);margin-top:5px;}
+
+  .detail-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;box-shadow:var(--shadow);}
+  .dp-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:16px;}
+  .dp-title{font-size:17px;font-weight:600;color:var(--text);}
+  .dp-desc{font-size:13px;color:var(--text2);margin-top:4px;line-height:1.55;}
+  .mark-btn{padding:7px 14px;border-radius:var(--radius-sm);border:1px solid var(--border-md);font-size:13px;font-weight:500;cursor:pointer;background:var(--surface2);color:var(--text2);transition:all .15s;white-space:nowrap;flex-shrink:0;}
+  .mark-btn:hover{background:var(--surface3);color:var(--text);}
+  .mark-btn.is-done{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text);}
+
+  .sec-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:18px 0 9px;}
+  .checklist{display:flex;flex-direction:column;gap:8px;}
+  .check-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text);cursor:pointer;line-height:1.5;}
+  .check-item input[type=checkbox]{margin-top:2px;flex-shrink:0;width:15px;height:15px;accent-color:var(--purple);cursor:pointer;}
+  .check-item.is-checked{color:var(--text3);text-decoration:line-through;}
+  .iq{background:var(--surface2);border-radius:var(--radius-sm);padding:9px 13px;font-size:13px;color:var(--text);margin-bottom:7px;line-height:1.5;}
+  .iq-prefix{font-weight:600;color:var(--text2);margin-right:4px;}
+  .proj-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:3px 9px;border-radius:var(--radius-sm);background:var(--purple-bg);color:var(--purple-text);margin-top:6px;}
+  .cert-alert{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:var(--radius-sm);margin-top:6px;font-size:13px;}
+  .cert-alert-clf{background:var(--coral-bg);color:var(--coral-text);border:1px solid rgba(216,90,48,.2);}
+  .cert-alert-mla{background:var(--orange-bg);color:var(--orange-text);border:1px solid rgba(192,92,16,.2);}
+
+  .res-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:22px;}
+  .res-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 15px;}
+  .res-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;line-height:1.35;}
+  .res-why{font-size:12px;color:var(--text2);line-height:1.45;margin-bottom:7px;}
+  .res-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .res-label{font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;display:inline-block;letter-spacing:.03em;}
+  .label-must{background:var(--coral-bg);color:var(--coral-text);}
+  .label-good{background:var(--amber-bg);color:var(--amber-text);}
+  .label-opt{background:var(--surface2);color:var(--text3);}
+  .res-access{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--teal-bg);color:var(--teal-text);font-weight:600;}
+  .res-access-sub{background:var(--purple-bg);color:var(--purple-text);}
+  .resource-topic{font-size:15px;font-weight:600;color:var(--text);margin:24px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+
+  .proj-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .proj-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:3px;}
+  .proj-week{font-size:12px;color:var(--text3);margin-bottom:10px;}
+  .proj-section{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:14px 0 7px;}
+  .proj-text{font-size:13px;color:var(--text2);line-height:1.55;}
+  .proj-step{display:flex;gap:10px;font-size:13px;color:var(--text);margin-bottom:6px;line-height:1.45;}
+  .proj-step-num{font-size:11px;font-weight:600;color:var(--text3);min-width:18px;padding-top:2px;}
+  .ext-item{font-size:13px;color:var(--text2);padding-left:14px;position:relative;margin-bottom:4px;}
+  .ext-item::before{content:"→";position:absolute;left:0;color:var(--text3);}
+
+  .deliverable{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;margin-bottom:14px;}
+  .deliverable-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .deliverable-list{list-style:none;display:flex;flex-direction:column;gap:6px;}
+  .deliverable-list li{font-size:13px;color:var(--text2);padding-left:14px;position:relative;line-height:1.5;}
+  .deliverable-list li::before{content:"·";position:absolute;left:0;color:var(--text3);font-weight:700;}
+  .narrative-box{background:var(--purple-bg);border:1px solid rgba(127,119,221,.3);border-radius:var(--radius);padding:18px 22px;margin-top:20px;}
+  .narrative-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--purple-text);margin-bottom:10px;}
+  .narrative-text{font-size:14px;color:var(--purple-text);line-height:1.75;font-style:italic;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap;}
+  .tab-btn{padding:6px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:13px;color:var(--text2);cursor:pointer;background:transparent;transition:all .15s;}
+  .tab-btn:hover{background:var(--surface2);}
+  .tab-btn.active{background:var(--surface);border-color:var(--border-md);color:var(--text);font-weight:500;}
+
+  .page{display:none;}
+  .page.active{display:block;}
+  ::-webkit-scrollbar{width:5px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border-md);border-radius:99px;}
+  @media(max-width:768px){
+    .sidebar{display:none;}
+    .main{padding:18px 14px;}
+    .stats-strip,.cert-strip{grid-template-columns:1fr 1fr;}
+    .week-grid{grid-template-columns:1fr 1fr;}
+    .res-grid{grid-template-columns:1fr;}
+  }
+  @media(max-width:480px){.week-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="sidebar-logo"><span class="logo-icon">⚡</span> AI Infra Roadmap</div>
+
+  <div style="margin-bottom:12px;">
+    <div class="sidebar-cert">
+      <div class="cert-dot" style="background:#D85A30"></div>
+      <span class="cert-label">AWS CLF-C02</span>
+      <span class="cert-status cert-pending" id="sb-clf">Pending</span>
+    </div>
+    <div class="sidebar-cert">
+      <div class="cert-dot" style="background:#C05C10"></div>
+      <span class="cert-label">AWS MLA-C01</span>
+      <span class="cert-status cert-pending" id="sb-mla">Pending</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">Navigation</div>
+  <button class="nav-item active" onclick="showPage('overview')">
+    <span class="nav-dot" style="background:#7F77DD"></span> Overview
+  </button>
+  <button class="nav-item" onclick="showPage('resources')">
+    <span class="nav-dot" style="background:#378ADD"></span> Resources
+  </button>
+  <button class="nav-item" onclick="showPage('projects')">
+    <span class="nav-dot" style="background:#D4537E"></span> Projects
+  </button>
+  <button class="nav-item" onclick="showPage('deliverables')">
+    <span class="nav-dot" style="background:#1D9E75"></span> Deliverables
+  </button>
+
+  <div class="sidebar-section">Weeks</div>
+  <div id="sidebar-weeks"></div>
+</aside>
+
+<main class="main">
+
+  <!-- OVERVIEW -->
+  <div class="page active" id="page-overview">
+    <div class="page-header">
+      <div class="page-title">AI infrastructure summer roadmap</div>
+      <div class="page-sub">12 weeks · CLF-C02 → MLA-C01 · C++ · CUDA · Linux · Inference optimization</div>
+    </div>
+
+    <div class="cert-strip">
+      <div class="cert-card">
+        <div class="cert-card-icon">🏅</div>
+        <div>
+          <div class="cert-card-name">AWS Cloud Practitioner</div>
+          <div class="cert-card-sub">CLF-C02 · Weeks 1–2 · AWS Skill Builder</div>
+          <span class="cert-card-badge badge-pending" id="clf-card-badge">Target: end of Week 2</span>
+        </div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-card-icon">🎯</div>
+        <div>
+          <div class="cert-card-name">AWS ML Engineer Associate</div>
+          <div class="cert-card-sub">MLA-C01 · Weeks 6–8 · AWS Skill Builder</div>
+          <span class="cert-card-badge badge-pending" id="mla-card-badge">Target: end of Week 8</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-strip">
+      <div class="stat"><div class="stat-val" id="stat-weeks">0/12</div><div class="stat-lbl">Weeks complete</div></div>
+      <div class="stat"><div class="stat-val" id="stat-tasks">0</div><div class="stat-lbl">Tasks checked</div></div>
+      <div class="stat"><div class="stat-val" id="stat-pct">0%</div><div class="stat-lbl">Progress</div></div>
+      <div class="stat"><div class="stat-val" id="stat-phase" style="font-size:14px;padding-top:4px;">CLF-C02 Sprint</div><div class="stat-lbl">Current phase</div></div>
+    </div>
+
+    <div class="week-grid" id="week-grid"></div>
+    <div class="detail-panel" id="detail-panel" style="display:none;"></div>
+  </div>
+
+  <!-- RESOURCES -->
+  <div class="page" id="page-resources">
+    <div class="page-header">
+      <div class="page-title">Recommended resources</div>
+      <div class="page-sub">AWS certifications: official AWS Skill Builder only. All other topics: best-in-class free resources.</div>
+    </div>
+    <div id="resources-content"></div>
+  </div>
+
+  <!-- PROJECTS -->
+  <div class="page" id="page-projects">
+    <div class="page-header">
+      <div class="page-title">Portfolio projects</div>
+      <div class="page-sub">Two projects that will differentiate you in AI infrastructure and ML systems interviews.</div>
+    </div>
+    <div id="projects-content"></div>
+  </div>
+
+  <!-- DELIVERABLES -->
+  <div class="page" id="page-deliverables">
+    <div class="page-header">
+      <div class="page-title">Final deliverables</div>
+      <div class="page-sub">What you have by the end of Week 12.</div>
+    </div>
+    <div id="deliverables-content"></div>
+  </div>
+
+</main>
+</div>
+
+<script>
+const WEEKS = [
+  {
+    num:1, title:"CLF-C02 sprint: cloud concepts + Linux day zero",
+    tag:"clf", tagLabel:"AWS CLF-C02", fillClass:"fill-clf", dotColor:"#D85A30",
+    phase:"CLF-C02 Sprint", certPhase:"clf",
+    desc:"Complete 55–60% of CLF-C02 via AWS Skill Builder. Learn Linux terminal basics in parallel. Set up your dev environment.",
+    projectBadge:null,
+    certAlert:{ type:"clf", text:"AWS Skill Builder: Start with AWS Cloud Practitioner Essentials (free, ~6 hrs) then Exam Prep Standard Course CLF-C02." },
+    tasks:[
+      "Create a free AWS Skill Builder account at skillbuilder.aws",
+      "Complete AWS Cloud Practitioner Essentials — Modules 1–5 (Cloud concepts, IAM, EC2, global infra, networking)",
+      "Complete AWS Skill Builder: Exam Prep Standard Course CLF-C02 — Part 1",
+      "Set up WSL2 or Linux VM; install git, gcc, g++, htop, tmux",
+      "Write 20 Linux terminal commands from memory daily (no googling)",
+      "Create summer-notes GitHub repo; commit a Linux cheatsheet",
+      "Use grep, awk, sed on a sample log file"
+    ],
+    project:"Linux cheatsheet in GitHub repo: 50+ commands by category, written in your own words",
+    resources:[
+      {name:"AWS Cloud Practitioner Essentials (Skill Builder)", label:"must", access:"free", why:"Official AWS course, updated 2025. ~6 hrs. Start here."},
+      {name:"Exam Prep Standard Course: CLF-C02 (Skill Builder)", label:"must", access:"free", why:"Official exam-aligned prep; covers all four domains"},
+      {name:"Exam Prep Official Practice Question Set: CLF-C02 (Skill Builder)", label:"must", access:"free", why:"Real exam-style questions from AWS"},
+    ],
+    interview:[
+      "What is the AWS shared responsibility model?",
+      "What is the difference between S3, EBS, and EFS?",
+      "What does chmod 755 mean in Linux?",
+      "How do you find which process is using port 8080?"
+    ]
+  },
+  {
+    num:2, title:"CLF-C02 complete + exam + Linux deeper",
+    tag:"clf", tagLabel:"AWS CLF-C02", fillClass:"fill-clf", dotColor:"#D85A30",
+    phase:"CLF-C02 Sprint", certPhase:"clf",
+    desc:"Finish the CLF-C02 course, score 80%+ on practice questions, sit and pass the exam. Begin Linux systems knowledge.",
+    projectBadge:"AWS CLF-C02 ✓",
+    certAlert:{ type:"clf", text:"Sit the CLF-C02 exam this week. Book via aws.amazon.com/certification after scoring 80%+ on the Skill Builder practice set." },
+    tasks:[
+      "Complete AWS Cloud Practitioner Essentials — Modules 6–10 (S3, databases, monitoring, pricing, migration)",
+      "Complete Exam Prep Standard Course: CLF-C02 — Part 2 (all domains done)",
+      "Score 80%+ on Exam Prep Official Practice Question Set; review every wrong answer",
+      "Book and sit the CLF-C02 exam (Pearson VUE or testing centre)",
+      "Read about Linux filesystem hierarchy: /proc, /sys, /dev, /etc",
+      "Learn cron, systemd, journalctl, ssh basics",
+      "Write first C++ program: read a file line by line, print word counts (ifstream + map)"
+    ],
+    project:"Pass AWS CLF-C02 exam. Document prep strategy in aws-prep/README.md in your notes repo.",
+    resources:[
+      {name:"Exam Prep Official Practice Question Set: CLF-C02 (Skill Builder)", label:"must", access:"free", why:"Use this as your go/no-go gate before booking the exam"},
+      {name:"AWS Cloud Quest: Cloud Practitioner (Skill Builder)", label:"good", access:"free", why:"Game-based reinforcement — use it to review weak areas only"},
+      {name:"Exam Prep Enhanced Course: CLF-C02 (Skill Builder)", label:"opt", access:"subscription", why:"Paid tier — worth it only if you fail the free practice set below 75%"},
+    ],
+    interview:[
+      "What is Lambda and when would you use it over EC2?",
+      "Explain a VPC. What is the difference between public and private subnets?",
+      "What is a process vs a thread? What is a daemon?",
+      "What is a system call? Give two examples."
+    ]
+  },
+  {
+    num:3, title:"C++ memory, pointers, RAII",
+    tag:"cpp", tagLabel:"C++", fillClass:"fill-cpp", dotColor:"#378ADD",
+    phase:"C++ Foundations", certPhase:null,
+    desc:"The most important week of the summer for systems roles. C++ memory model is tested in nearly every AI infrastructure interview.",
+    projectBadge:"Portfolio Project 1 (begins)",
+    certAlert:null,
+    tasks:[
+      "Read A Tour of C++ (Stroustrup) — Chapters 1–5",
+      "Watch CppCon Back to Basics: Smart Pointers (YouTube, Arthur O'Dwyer 2019)",
+      "Implement a dynamic array from scratch: custom vector<T> with push_back, resize, operator[]",
+      "Implement a singly linked list with push, pop, find, and a destructor",
+      "Run valgrind --leak-check=full on every program — zero leaks required",
+      "Learn gdb basics: set breakpoint, step, inspect variables, print stack trace",
+      "Implement unique_ptr<T> from scratch (acquire/release/dereference, no copy)"
+    ],
+    project:"GitHub repo cpp-systems-fundamentals: /memory/ and /data-structures/ with Makefile and README",
+    resources:[
+      {name:"A Tour of C++ — Bjarne Stroustrup (3rd ed.)", label:"must", access:"book", why:"Dense, modern, authoritative — 200 pages, not a textbook"},
+      {name:"CppCon Back to Basics: Smart Pointers (YouTube)", label:"must", access:"free", why:"Clearest explanation of unique_ptr/shared_ptr you'll find"},
+      {name:"valgrind --leak-check=full", label:"must", access:"free", why:"Every program must pass with zero leaks before you move on"},
+    ],
+    interview:[
+      "What is the difference between stack and heap memory? Who manages each?",
+      "What is a dangling pointer? What is a double free? How do you prevent both?",
+      "Why does C++ have destructors? What problem do they solve?",
+      "What does std::unique_ptr guarantee? When would you use shared_ptr instead?"
+    ]
+  },
+  {
+    num:4, title:"C++ OOP, STL, concurrency + OS concepts",
+    tag:"cpp", tagLabel:"C++ + OS", fillClass:"fill-cpp", dotColor:"#378ADD",
+    phase:"C++ Systems", certPhase:null,
+    desc:"Write C++ the way systems engineers do. Understand the OS abstractions your code runs on.",
+    projectBadge:null,
+    certAlert:null,
+    tasks:[
+      "Read A Tour of C++ — Chapters 6–11 (Containers, Algorithms, Concurrency)",
+      "Read OSTEP Parts 1 and 2 (Virtualization) — free at ostep.org",
+      "Implement a thread pool using std::thread and std::mutex",
+      "Implement a producer-consumer queue with std::condition_variable",
+      "Profile a sorting algorithm with perf stat on Linux",
+      "Read OSTEP Chapters 18–20: virtual memory, page tables, TLB",
+      "Rewrite Week 3 linked list to use std::unique_ptr for ownership"
+    ],
+    project:"Add /concurrency/ (thread pool, producer-consumer) and /os-concepts/ markdown docs to cpp-systems-fundamentals",
+    resources:[
+      {name:"OSTEP — Three Easy Pieces (free, ostep.org)", label:"must", access:"free", why:"Best OS textbook ever written. Free. Modern. Read Parts 1–2 this week."},
+      {name:"CppCon Back to Basics: Move Semantics (YouTube)", label:"must", access:"free", why:"Required to understand how STL containers and threads work"},
+      {name:"The Linux Programming Interface — Kerrisk", label:"good", access:"book", why:"Reference for every POSIX API call; use as a reference, not cover-to-cover"},
+    ],
+    interview:[
+      "What is the difference between a mutex and a semaphore?",
+      "What is a race condition? Give a concrete C++ example.",
+      "What happens when a process calls malloc? What does the OS actually do?",
+      "When would you choose std::unordered_map over std::map and why?"
+    ]
+  },
+  {
+    num:5, title:"Linux systems programming + MiniShell",
+    tag:"linux", tagLabel:"Linux + C++", fillClass:"fill-linux", dotColor:"#639922",
+    phase:"Systems Programming", certPhase:null,
+    desc:"Write code that talks to the OS. Build Portfolio Project 1: a POSIX shell in C++.",
+    projectBadge:"Portfolio Project 1 — MiniShell",
+    certAlert:null,
+    tasks:[
+      "Read OSTEP Part 3 (Persistence: files, I/O, file systems)",
+      "Read The Linux Programming Interface — Chapters 6, 24, 44 (processes, fork, pipes)",
+      "Implement tokenizer: parse a command string into argv[] using std::stringstream",
+      "Add basic exec: fork() + execvp() to run a single external command",
+      "Add built-in commands: cd, exit, pwd handled in the parent process",
+      "Implement piping: parse | and chain commands with pipe() + dup2()",
+      "Add background jobs (&) and signal handling for SIGINT and SIGTERM"
+    ],
+    project:"MiniShell v1: ls | grep .cpp works correctly. GitHub README with build instructions and architecture diagram.",
+    resources:[
+      {name:"The Linux Programming Interface — Kerrisk", label:"must", access:"book", why:"Definitive POSIX reference; read the fork/exec/pipe chapters this week"},
+      {name:"OSTEP Part 3 (free, ostep.org)", label:"must", access:"free", why:"File system and I/O concepts that underpin every storage service"},
+      {name:"MIT 6.S081 lectures (YouTube)", label:"opt", access:"free", why:"If you want to go deep on OS internals via the xv6 kernel"},
+    ],
+    interview:[
+      "What happens when you call fork()? What does the child process inherit?",
+      "What is a file descriptor? How does dup2 work?",
+      "What is mmap and when would you use it instead of read/write?",
+      "Explain the lifecycle of a Unix process from exec to exit."
+    ]
+  },
+  {
+    num:6, title:"MLA-C01 Domain 1 + 2: data ingestion and model development",
+    tag:"mla", tagLabel:"AWS MLA-C01", fillClass:"fill-mla", dotColor:"#C05C10",
+    phase:"MLA-C01 Sprint", certPhase:"mla",
+    desc:"AWS ML Engineer Associate: Domain 1 (Data Ingestion & Transformation) and Domain 2 (ML Model Development). Focus on SageMaker and AWS ML services.",
+    projectBadge:null,
+    certAlert:{ type:"mla", text:"Start: Exam Prep Standard Course MLA-C01 (Skill Builder, free). Also start Machine Learning Pipeline on AWS for hands-on SageMaker exposure." },
+    tasks:[
+      "Complete Exam Prep Standard Course MLA-C01 — Domains 1 and 2 modules",
+      "Study Domain 1: S3 data lakes, AWS Glue ETL, Kinesis Data Streams/Firehose, feature engineering",
+      "Study Domain 2: SageMaker built-in algorithms (XGBoost, Linear Learner, k-NN), training jobs",
+      "Complete Machine Learning Pipeline on AWS (Skill Builder) — first half",
+      "Run a SageMaker training job in the AWS free tier (XGBoost on a small dataset)",
+      "Understand: SageMaker Studio, Experiments, Feature Store, Data Wrangler",
+      "Take Domain 1 and Domain 2 Review quizzes on Skill Builder; score 75%+"
+    ],
+    project:"Skill Builder: complete the first official practice question set pass; score and note weak domains",
+    resources:[
+      {name:"Exam Prep Standard Course: MLA-C01 (Skill Builder)", label:"must", access:"free", why:"Official AWS exam-aligned course — primary study material for MLA-C01"},
+      {name:"Exam Prep Official Practice Question Set: MLA-C01 (Skill Builder)", label:"must", access:"free", why:"Use throughout Weeks 6–8 as a progress gauge"},
+      {name:"Machine Learning Pipeline on AWS (Skill Builder)", label:"must", access:"free", why:"Hands-on SageMaker pipeline from data ingestion to deployment"},
+    ],
+    interview:[
+      "What is Amazon SageMaker and what problems does it solve in the ML lifecycle?",
+      "What is the difference between Amazon Kinesis Data Streams and Kinesis Firehose?",
+      "What is AWS Glue and how does it fit into an ML data pipeline?",
+      "What is a SageMaker Feature Store and why would you use it?"
+    ]
+  },
+  {
+    num:7, title:"MLA-C01 Domain 3 + 4: deployment, MLOps, monitoring",
+    tag:"mla", tagLabel:"AWS MLA-C01", fillClass:"fill-mla", dotColor:"#C05C10",
+    phase:"MLA-C01 Sprint", certPhase:"mla",
+    desc:"Domain 3 (Deployment & Orchestration) and Domain 4 (Monitoring & Operations). MLOps, SageMaker endpoints, model monitor, security.",
+    projectBadge:null,
+    certAlert:{ type:"mla", text:"Complete all four Domain Review courses on Skill Builder (Domain 1–4 Reviews for MLA-C01). Each is free and exam-focused." },
+    tasks:[
+      "Complete Exam Prep Standard Course MLA-C01 — Domains 3 and 4 modules",
+      "Study Domain 3: SageMaker real-time endpoints, batch transform, serverless inference, SageMaker Pipelines",
+      "Study Domain 4: SageMaker Model Monitor (data drift, model quality), CloudWatch for ML, security (IAM, KMS, VPC)",
+      "Complete all four Domain Review courses on Skill Builder (Domains 1–4 for MLA-C01)",
+      "Complete Machine Learning Pipeline on AWS (Skill Builder) — second half",
+      "Take the full Exam Prep Practice Question Set: score 78%+ before proceeding",
+      "Review all wrong answers; re-read the relevant domain section for each miss"
+    ],
+    project:"Full Exam Prep Practice Question Set run: document score, weak domains, and 3 specific re-study areas",
+    resources:[
+      {name:"Domain 1–4 Review Courses: MLA-C01 (Skill Builder)", label:"must", access:"free", why:"Expert video instruction per domain — aligned to exam objectives"},
+      {name:"MLOps Engineering on AWS (Skill Builder)", label:"good", access:"free", why:"Covers SageMaker Pipelines, model registry, and CI/CD for ML"},
+      {name:"Exam Prep Enhanced Course: MLA-C01 (Skill Builder)", label:"opt", access:"subscription", why:"Subscribe for 1 month (~$29): adds labs, practice exams, and game-based learning"},
+    ],
+    interview:[
+      "What is the difference between SageMaker real-time inference and batch transform?",
+      "What is SageMaker Model Monitor? What types of drift can it detect?",
+      "How do you implement a CI/CD pipeline for ML models on AWS?",
+      "What IAM and VPC configurations are needed to keep SageMaker endpoints secure?"
+    ]
+  },
+  {
+    num:8, title:"MLA-C01 exam + CUDA day zero",
+    tag:"mla", tagLabel:"MLA-C01 + CUDA", fillClass:"fill-mla", dotColor:"#C05C10",
+    phase:"MLA-C01 Sprint", certPhase:"mla",
+    desc:"Sit and pass the MLA-C01 exam. Begin CUDA setup and first GPU kernel in parallel.",
+    projectBadge:"AWS MLA-C01 ✓",
+    certAlert:{ type:"mla", text:"Sit the MLA-C01 exam early this week. Book at aws.amazon.com/certification once you score 80%+ on the practice question set." },
+    tasks:[
+      "Final review: re-read weak domain notes; flashcard all SageMaker service names and use cases",
+      "Book and sit the MLA-C01 exam (target: Monday–Tuesday of this week)",
+      "Install CUDA Toolkit 12.x; verify with nvcc --version and deviceQuery sample",
+      "Read CUDA C++ Programming Guide — Chapters 1–2 (thread hierarchy, memory model overview)",
+      "Write first CUDA kernel: vector addition; verify output against CPU",
+      "Experiment with thread block sizes and measure differences in launch time",
+      "Commit MLA prep notes and results to your notes repo"
+    ],
+    project:"Pass AWS MLA-C01 exam. First CUDA vector addition kernel running and verified.",
+    resources:[
+      {name:"Exam Prep Official Practice Question Set: MLA-C01 (Skill Builder)", label:"must", access:"free", why:"Run a full timed pass — final gate before sitting the exam"},
+      {name:"AWS Certification exam guide: MLA-C01 (aws.amazon.com)", label:"must", access:"free", why:"Read the official domain weightings the night before the exam"},
+      {name:"CUDA C++ Programming Guide Ch. 1–2 (docs.nvidia.com)", label:"must", access:"free", why:"Start here for GPU architecture and thread model"},
+    ],
+    interview:[
+      "Walk me through all four MLA-C01 exam domains. What does each cover?",
+      "What is the difference between a thread, a warp, and a block in CUDA?",
+      "When would you choose SageMaker Serverless Inference vs a real-time endpoint?",
+      "What is CUDA and why does GPU parallelism matter for ML inference?"
+    ]
+  },
+  {
+    num:9, title:"CUDA: GPU architecture, shared memory, optimization",
+    tag:"cuda", tagLabel:"CUDA", fillClass:"fill-cuda", dotColor:"#7F77DD",
+    phase:"GPU Programming", certPhase:null,
+    desc:"Deepen GPU understanding. Tiled matrix multiplication, memory hierarchy, and profiling with Nsight.",
+    projectBadge:"Portfolio Project 2 (begins)",
+    certAlert:null,
+    tasks:[
+      "Read CUDA C++ Programming Guide — Chapters 3–5 (execution model, memory, performance)",
+      "Read Programming Massively Parallel Processors (PMPP) — Chapters 1–5",
+      "Implement naive matrix multiplication in CUDA; verify against numpy",
+      "Implement tiled matmul using shared memory; compare throughput vs naive",
+      "Profile with Nsight Systems — read SM utilization and memory bandwidth",
+      "Experiment with block sizes (32, 64, 128, 256) and measure effect on GFLOPS",
+      "Measure GB/s bandwidth from global memory; calculate % of theoretical peak"
+    ],
+    project:"CUDA repo: vector add + naive matmul + tiled matmul, all benchmarked vs cuBLAS. Python plot of GB/s vs matrix size.",
+    resources:[
+      {name:"CUDA C++ Programming Guide (docs.nvidia.com)", label:"must", access:"free", why:"Primary reference; Chapters 1–5 are mandatory reading"},
+      {name:"Programming Massively Parallel Processors — Kirk & Hwu", label:"must", access:"book", why:"Best GPU programming textbook; covers memory hierarchy in depth"},
+      {name:"NVIDIA DLI: CUDA C/C++ Fundamentals (Skill Builder / DLI)", label:"good", access:"free", why:"Jupyter notebooks with live GPU access — great for labs"},
+    ],
+    interview:[
+      "Why is shared memory faster than global memory? What are its limitations?",
+      "What is a bank conflict in shared memory? How do you avoid it?",
+      "What is occupancy? What limits it and why does it matter?",
+      "How do you profile a CUDA kernel? What metrics do you look at first?"
+    ]
+  },
+  {
+    num:10, title:"CUDA optimization + quantization + ONNX",
+    tag:"ai", tagLabel:"AI Inference", fillClass:"fill-ai", dotColor:"#BA7517",
+    phase:"AI Optimization", certPhase:null,
+    desc:"From 'runs on GPU' to 'runs efficiently on GPU.' Add quantization and ONNX to your inference stack.",
+    projectBadge:null,
+    certAlert:null,
+    tasks:[
+      "Read PMPP Chapters 5–7 (memory access patterns, performance analysis)",
+      "Implement a 1D convolution kernel optimized for coalesced global memory access",
+      "Read HuggingFace: A Conceptual Guide to Quantization + PyTorch quantization docs",
+      "Apply dynamic quantization to DistilBERT; measure CPU inference speedup",
+      "Apply static PTQ (post-training quantization) to ResNet-50 with calibration data",
+      "Export ResNet-50 to ONNX with torch.onnx.export; validate with ONNX Runtime",
+      "Build a results.md table: model, precision, latency (ms), model size (MB), accuracy"
+    ],
+    project:"Add /quantization/ to CUDA repo: PTQ scripts, ONNX export pipeline, results.md benchmark table",
+    resources:[
+      {name:"HuggingFace: A Conceptual Guide to Quantization (blog)", label:"must", access:"free", why:"Best conceptual overview; links to working PyTorch code"},
+      {name:"PyTorch Quantization Tutorial (pytorch.org)", label:"must", access:"free", why:"Official docs with runnable examples for dynamic and static PTQ"},
+      {name:"Netron — ONNX model visualizer (netron.app)", label:"good", access:"free", why:"Visualize the ONNX compute graph; spot fused and unfused layers"},
+    ],
+    interview:[
+      "What is quantization? What is the difference between PTQ and QAT?",
+      "What is the difference between FP16 and INT8 quantization? Which is better when?",
+      "What is ONNX and why is it useful in a production AI inference pipeline?",
+      "What does memory coalescing mean in CUDA and why does it affect throughput?"
+    ]
+  },
+  {
+    num:11, title:"TensorRT + portfolio polish",
+    tag:"ai", tagLabel:"TensorRT + Portfolio", fillClass:"fill-ai", dotColor:"#BA7517",
+    phase:"Ship It", certPhase:null,
+    desc:"Production-grade inference with TensorRT. Build the full PyTorch → ONNX → TensorRT benchmark pipeline and make your GitHub recruiters-ready.",
+    projectBadge:"Portfolio Project 2 — complete",
+    certAlert:null,
+    tasks:[
+      "Install TensorRT via Docker: nvcr.io/nvidia/tensorrt (recommended)",
+      "Convert ResNet-50 ONNX model → TensorRT FP32 engine; measure latency",
+      "Build TensorRT FP16 and INT8 engines; run INT8 calibration with calibration dataset",
+      "Write full benchmark script: PyTorch FP32 → FP16 → ONNX RT → TensorRT FP32 → FP16 → INT8",
+      "Polish cpp-systems-fundamentals: clean README, Makefile, valgrind CI badge",
+      "Polish CUDA/inference repo: full benchmark table, architecture diagram, Docker setup",
+      "Record 3-min Loom video walkthrough for each project; link in READMEs"
+    ],
+    project:"GPU Inference Optimizer: complete PyTorch-to-TensorRT pipeline with benchmark table across all precision levels",
+    resources:[
+      {name:"TensorRT Developer Guide (docs.nvidia.com/deeplearning/tensorrt)", label:"must", access:"free", why:"Read Parts 1–3: understand build phase, runtime, and precision calibration"},
+      {name:"ONNX Model Zoo + Netron (netron.app)", label:"must", access:"free", why:"Download real models; inspect which layers TensorRT fuses"},
+      {name:"TensorRT Best Practices Guide (Nvidia)", label:"good", access:"free", why:"Calibration strategies, layer fusion details, and latency tuning tips"},
+    ],
+    interview:[
+      "What optimizations does TensorRT apply to an ONNX graph? What is layer fusion?",
+      "What is the tradeoff between INT8 accuracy loss and inference speedup?",
+      "Walk me through optimizing a PyTorch model for deployment on an NVIDIA edge device.",
+      "How does your TensorRT pipeline relate to what SageMaker does for model deployment?"
+    ]
+  },
+  {
+    num:12, title:"Buffer: extensions, pruning, job applications",
+    tag:"portfolio", tagLabel:"Extensions", fillClass:"fill-portfolio", dotColor:"#D4537E",
+    phase:"Extensions", certPhase:null,
+    desc:"Use this week for depth, applications, or anything that slipped. Not a rest week — ship something extra.",
+    projectBadge:null,
+    certAlert:null,
+    tasks:[
+      "Add structured pruning: torch.nn.utils.prune on ResNet-50; measure sparsity vs accuracy",
+      "Advanced CUDA: implement a numerically stable softmax or matrix transpose kernel",
+      "Write 20 LeetCode problems in C++ (easy/medium: arrays, hash maps, graphs)",
+      "Send 5 cold LinkedIn messages to AI infrastructure engineers with your GitHub links",
+      "Prepare and record a 5-minute 'what I built this summer' video (Loom)",
+      "Update resume: list both AWS certs, GitHub repos, and a one-line description per project",
+      "Optional: explore AWS SageMaker MLOps — connect your inference pipeline to a SageMaker endpoint"
+    ],
+    project:"Pruning results added to inference repo. Resume updated. Cold outreach sent.",
+    resources:[
+      {name:"PyTorch Pruning Tutorial (pytorch.org/tutorials)", label:"must", access:"free", why:"Structured and unstructured pruning with working code"},
+      {name:"The Lottery Ticket Hypothesis paper (Frankle & Carlin, 2019)", label:"good", access:"free", why:"Most cited pruning paper; understand the concept behind magnitude pruning"},
+      {name:"AWS SageMaker Real-Time Inference docs (docs.aws.amazon.com)", label:"opt", access:"free", why:"Connect your TensorRT output to a SageMaker endpoint for a full cloud+GPU story"},
+    ],
+    interview:[
+      "What is weight pruning? What is the difference between structured and unstructured pruning?",
+      "If latency is the only constraint, which optimization would you apply first: pruning, quantization, or TensorRT?",
+      "How would you deploy your TensorRT model as a managed API on AWS?",
+      "Tell me about both projects you built this summer. What was the hardest problem in each?"
+    ]
+  }
+];
+
+const ALL_RESOURCES = [
+  { topic:"AWS CLF-C02 — AWS Skill Builder (official only)", items:[
+    {name:"AWS Cloud Practitioner Essentials (Skill Builder)", label:"must", access:"free", why:"Official AWS course updated 2025. ~6 hours. The right starting point — no substitutes."},
+    {name:"Exam Prep Standard Course: CLF-C02 (Skill Builder)", label:"must", access:"free", why:"Exam-aligned prep covering all four CLF-C02 domains. Free, no subscription needed."},
+    {name:"Exam Prep Official Practice Question Set: CLF-C02 (Skill Builder)", label:"must", access:"free", why:"Real exam-style questions. Score 80%+ before booking your exam."},
+    {name:"AWS Cloud Quest: Cloud Practitioner (Skill Builder)", label:"good", access:"free", why:"Game-based reinforcement. Use only to review weak areas, not as primary study."},
+    {name:"Exam Prep Enhanced Course: CLF-C02 (Skill Builder)", label:"opt", access:"subscription", why:"Subscribe 1 month (~$29) only if you score below 75% on the free practice set."},
+  ]},
+  { topic:"AWS MLA-C01 — AWS Skill Builder (official only)", items:[
+    {name:"Exam Prep Standard Course: MLA-C01 (Skill Builder)", label:"must", access:"free", why:"Primary study material. Covers all four domains with expert instruction. Free."},
+    {name:"Exam Prep Official Practice Question Set: MLA-C01 (Skill Builder)", label:"must", access:"free", why:"Use throughout Weeks 6–8 as your weekly progress gauge. Free."},
+    {name:"Domain 1–4 Review Courses: MLA-C01 (Skill Builder)", label:"must", access:"free", why:"Four separate domain review courses — video instruction + quizzes per domain."},
+    {name:"Machine Learning Pipeline on AWS (Skill Builder)", label:"must", access:"free", why:"Hands-on: data ingestion → SageMaker training → deployment. Free."},
+    {name:"MLOps Engineering on AWS (Skill Builder)", label:"good", access:"free", why:"SageMaker Pipelines, model registry, CI/CD for ML. Free."},
+    {name:"Exam Prep Enhanced Course: MLA-C01 (Skill Builder)", label:"opt", access:"subscription", why:"One month subscription (~$29) adds builder labs, official practice exam, game-based review."},
+  ]},
+  { topic:"C++", items:[
+    {name:"A Tour of C++ — Bjarne Stroustrup (3rd ed.)", label:"must", access:"book", why:"Dense, modern, authoritative — 200 pages, not a textbook. Read before writing code."},
+    {name:"CppCon Back to Basics series (YouTube)", label:"must", access:"free", why:"Smart Pointers, Move Semantics, RAII, Concurrency — all free, all excellent."},
+    {name:"Effective Modern C++ — Scott Meyers", label:"opt", access:"book", why:"Read Weeks 4+ for move semantics and templates depth."},
+  ]},
+  { topic:"Linux terminal + OS concepts", items:[
+    {name:"The Linux Command Line — Shotts (free, linuxcommand.org)", label:"must", access:"free", why:"Best introductory Linux book; practical exercises throughout."},
+    {name:"OSTEP — Three Easy Pieces (free, ostep.org)", label:"must", access:"free", why:"Best OS textbook ever written. Free. Modern. Read Parts 1–3 across Weeks 3–5."},
+    {name:"The Linux Programming Interface — Kerrisk", label:"good", access:"book", why:"Reference for every POSIX API call. Use as a reference, not cover-to-cover."},
+    {name:"OverTheWire: Bandit (wargame)", label:"opt", access:"free", why:"Gamified Linux challenges. Use in evenings if you want something less textbook-like."},
+  ]},
+  { topic:"CUDA", items:[
+    {name:"CUDA C++ Programming Guide (docs.nvidia.com)", label:"must", access:"free", why:"Primary reference. Chapters 1–5 are mandatory. Everything else is here when you need it."},
+    {name:"Programming Massively Parallel Processors — Kirk & Hwu", label:"must", access:"book", why:"Best GPU programming textbook. Memory hierarchy chapters are critical."},
+    {name:"NVIDIA DLI: CUDA C/C++ Fundamentals (Skill Builder / DLI free)", label:"good", access:"free", why:"Jupyter notebooks with live GPU access. Run the labs alongside the reading."},
+  ]},
+  { topic:"Quantization + Pruning", items:[
+    {name:"HuggingFace: A Conceptual Guide to Quantization (blog)", label:"must", access:"free", why:"Best conceptual overview of PTQ, QAT, FP16, INT8 with links to code."},
+    {name:"PyTorch Quantization Tutorial (pytorch.org)", label:"must", access:"free", why:"Official docs with runnable examples for dynamic and static PTQ."},
+    {name:"PyTorch Pruning Tutorial (pytorch.org/tutorials)", label:"must", access:"free", why:"Working code for structured and unstructured pruning from day one."},
+    {name:"White Paper on Neural Network Quantization (Nagel et al., 2021)", label:"opt", access:"free", why:"Rigorous theory behind PTQ/QAT. Read if you want to understand calibration deeply."},
+  ]},
+  { topic:"TensorRT / ONNX / inference", items:[
+    {name:"TensorRT Developer Guide (docs.nvidia.com/deeplearning/tensorrt)", label:"must", access:"free", why:"Read Parts 1–3. Understand the build phase, runtime, and precision calibration."},
+    {name:"ONNX Model Zoo + Netron (netron.app)", label:"must", access:"free", why:"Download real models; visualize graph structure; spot fused and unfused layers."},
+    {name:"TensorRT Best Practices Guide (Nvidia)", label:"good", access:"free", why:"Calibration strategies, layer fusion details, and latency tuning tips."},
+  ]},
+];
+
+const PROJECTS = [
+  {
+    title:"MiniShell — A POSIX Shell in C++",
+    week:"Week 5",
+    relevance:"Every embedded and infrastructure role requires deep understanding of processes, file descriptors, and syscalls. A working shell proves you understand what the OS does, not just how to use it. It also bridges directly to the Docker container and process isolation concepts covered in the MLA-C01 curriculum.",
+    skills:"C++, fork/exec, pipe/dup2, signal handling, POSIX APIs, Makefile, gdb, valgrind",
+    steps:[
+      "Tokenizer: parse a command string into argv[] using std::stringstream",
+      "Basic exec: use fork() + execvp() to run a single external command",
+      "Built-ins: implement cd, exit, pwd handled directly in the parent process",
+      "Pipes: parse | and chain two commands using pipe() + dup2()",
+      "Background jobs: parse & and handle SIGCHLD asynchronously",
+      "Redirects: implement >, >>, < using open() + dup2()",
+    ],
+    extensions:["Tab completion using the readline library","Scripting mode: run a .sh file","Environment variable expansion ($HOME, $PATH, $USER)"],
+    benchmark:"Compare your shell vs bash on 1000 sequential echo calls. Use perf stat ./mysh -c 'ls /tmp' and record median latency."
+  },
+  {
+    title:"GPU Inference Optimizer — PyTorch to TensorRT",
+    week:"Weeks 9–11",
+    relevance:"This is precisely the work AI infrastructure engineers do at NVIDIA, Meta, Google, and every AI startup running models at scale. Showing a working TensorRT pipeline with a real benchmark table is rare at the undergraduate level. It also directly demonstrates the deployment optimization concepts from the MLA-C01 Domain 3 curriculum — making both your cert and your project reinforce each other.",
+    skills:"Python, PyTorch, CUDA basics, ONNX, TensorRT, Docker, matplotlib, SageMaker (optional extension)",
+    steps:[
+      "FP32 baseline: ResNet-50 PyTorch inference — average of 1000 runs with GPU warm-up",
+      "FP16 baseline: use model.half() + torch.cuda.amp.autocast()",
+      "Dynamic quantization: torch.quantization.quantize_dynamic; measure CPU inference latency",
+      "Static PTQ: calibrate with 100 ImageNet images; measure GPU inference latency",
+      "ONNX export: torch.onnx.export; validate correctness with ONNX Runtime",
+      "TensorRT FP32, FP16, INT8 engines: build and measure latency for each",
+    ],
+    extensions:["Swap ResNet-50 for ViT-B/16 and redo the full pipeline","Add structured pruning before quantization and measure compounding gains","Wrap the TensorRT engine in a FastAPI endpoint — deploy it as a SageMaker real-time inference endpoint (connects MLA-C01 to your CUDA work)"],
+    benchmark:"README table: mode vs latency (ms) vs speedup vs model size (MB) vs Top-1 accuracy across all 6 optimization levels. Target: TRT INT8 should be 6–10× faster than PyTorch FP32."
+  }
+];
+
+let state = {
+  done: Array(12).fill(false),
+  checked: WEEKS.map(w => Array(w.tasks.length).fill(false)),
+  selectedWeek: 0,
+  detailOpen: false
+};
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('ai_roadmap_12w');
+    if (s) { const p = JSON.parse(s); Object.assign(state, p); }
+  } catch(e) {}
+}
+function saveState() {
+  try { localStorage.setItem('ai_roadmap_12w', JSON.stringify(state)); } catch(e) {}
+}
+
+function clfDone() { return state.done[1]; }
+function mlaDone() { return state.done[7]; }
+
+function updateCertBadges() {
+  const clf = clfDone();
+  const mla = mlaDone();
+  document.getElementById('sb-clf').textContent = clf ? 'Passed ✓' : 'Pending';
+  document.getElementById('sb-clf').className = 'cert-status ' + (clf ? 'cert-done' : 'cert-pending');
+  document.getElementById('sb-mla').textContent = mla ? 'Passed ✓' : 'Pending';
+  document.getElementById('sb-mla').className = 'cert-status ' + (mla ? 'cert-done' : 'cert-pending');
+  document.getElementById('clf-card-badge').textContent = clf ? 'Passed ✓' : 'Target: end of Week 2';
+  document.getElementById('clf-card-badge').className = 'cert-card-badge ' + (clf ? 'badge-done' : 'badge-pending');
+  document.getElementById('mla-card-badge').textContent = mla ? 'Passed ✓' : 'Target: end of Week 8';
+  document.getElementById('mla-card-badge').className = 'cert-card-badge ' + (mla ? 'badge-done' : 'badge-pending');
+}
+
+function updateStats() {
+  const wd = state.done.filter(Boolean).length;
+  const tc = state.checked.flat().filter(Boolean).length;
+  const tt = state.checked.flat().length;
+  document.getElementById('stat-weeks').textContent = wd + '/12';
+  document.getElementById('stat-tasks').textContent = tc;
+  document.getElementById('stat-pct').textContent = Math.round(tc / tt * 100) + '%';
+  const phases = ["CLF-C02 Sprint","CLF-C02 Sprint","C++ Foundations","C++ Systems","Systems Programming","MLA-C01 Sprint","MLA-C01 Sprint","MLA-C01 Sprint","GPU Programming","AI Optimization","Ship It","Extensions"];
+  let phase = "Complete 🎉";
+  for (let i = 0; i < 12; i++) { if (!state.done[i]) { phase = phases[i]; break; } }
+  document.getElementById('stat-phase').textContent = phase;
+  updateCertBadges();
+}
+
+function renderSidebar() {
+  const c = document.getElementById('sidebar-weeks');
+  c.innerHTML = '';
+  WEEKS.forEach((w, i) => {
+    const done = state.done[i];
+    const pct = Math.round(state.checked[i].filter(Boolean).length / state.checked[i].length * 100);
+    const btn = document.createElement('button');
+    btn.className = 'nav-item' + (state.selectedWeek === i && state.detailOpen ? ' active' : '');
+    const label = `W${w.num}: ${w.title.split(' ').slice(0,3).join(' ')}…`;
+    btn.innerHTML = `<span class="nav-dot" style="background:${w.dotColor}"></span>
+      <span style="flex:1;text-align:left;font-size:12px;">${label}</span>
+      <span class="nav-badge ${done ? 'done-badge' : ''}">${done ? '✓' : pct + '%'}</span>`;
+    btn.onclick = () => { openWeek(i); showPage('overview'); };
+    c.appendChild(btn);
+  });
+}
+
+function renderWeekGrid() {
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = '';
+  WEEKS.forEach((w, i) => {
+    const done = state.done[i];
+    const progress = state.checked[i].filter(Boolean).length;
+    const total = state.checked[i].length;
+    const pct = Math.round(progress / total * 100);
+    const card = document.createElement('div');
+    card.className = 'week-card' + (done ? ' done-card' : '') + (state.selectedWeek === i && state.detailOpen ? ' selected' : '');
+    card.innerHTML = `<div class="wc-top">
+        <div class="wc-num">Week ${w.num}</div>
+        ${done ? '<span style="font-size:12px;color:var(--success-text);">✓</span>' : ''}
+      </div>
+      <div class="wc-title">${w.title}</div>
+      <span class="tag tag-${w.tag}">${w.tagLabel}</span>
+      <div class="progress-wrap"><div class="progress-fill ${w.fillClass}" style="width:${pct}%"></div></div>
+      <div class="wc-progress-label">${progress}/${total} tasks${done ? ' · complete' : ''}</div>`;
+    card.onclick = () => openWeek(i);
+    grid.appendChild(card);
+  });
+}
+
+function openWeek(i) {
+  state.selectedWeek = i;
+  state.detailOpen = true;
+  const panel = document.getElementById('detail-panel');
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  renderDetailPanel();
+  renderWeekGrid();
+  renderSidebar();
+  saveState();
+}
+
+function renderDetailPanel() {
+  const w = WEEKS[state.selectedWeek];
+  const done = state.done[state.selectedWeek];
+  const panel = document.getElementById('detail-panel');
+  const accessMap = {free:'🆓 Free', book:'📖 Book/paid', subscription:'💳 Subscription'};
+  const labelText = {must:'Must-do', good:'Good supplement', opt:'Optional'};
+
+  let html = `<div class="dp-header">
+    <div>
+      <div class="dp-title">Week ${w.num} — ${w.title}</div>
+      <div class="dp-desc">${w.desc}</div>
+      ${w.projectBadge ? `<div class="proj-badge">★ ${w.projectBadge}</div>` : ''}
+    </div>
+    <button class="mark-btn ${done ? 'is-done' : ''}" onclick="toggleDone(${state.selectedWeek})">${done ? '✓ Complete' : 'Mark complete'}</button>
+  </div>`;
+
+  if (w.certAlert) {
+    html += `<div class="cert-alert cert-alert-${w.certAlert.type}">
+      <span style="font-size:16px;">${w.certAlert.type === 'clf' ? '🏅' : '🎯'}</span>
+      <span>${w.certAlert.text}</span>
+    </div>`;
+  }
+
+  html += `<div class="sec-label">To-do checklist</div><div class="checklist">`;
+  w.tasks.forEach((t, i) => {
+    const ch = state.checked[state.selectedWeek][i];
+    html += `<label class="check-item ${ch ? 'is-checked' : ''}">
+      <input type="checkbox" ${ch ? 'checked' : ''} onchange="toggleCheck(${state.selectedWeek},${i},this.checked)" />
+      ${t}
+    </label>`;
+  });
+  html += `</div>`;
+
+  html += `<div class="sec-label">Mini-project / output</div><div class="iq">${w.project}</div>`;
+
+  html += `<div class="sec-label">Resources this week</div>`;
+  w.resources.forEach(r => {
+    html += `<div class="iq">
+      <strong style="font-weight:600;">${r.name}</strong><br>
+      <span style="font-size:12px;color:var(--text2);">${r.why}</span><br>
+      <span style="margin-top:5px;display:inline-flex;gap:6px;flex-wrap:wrap;">
+        <span class="res-label label-${r.label}">${labelText[r.label]}</span>
+        <span class="res-access ${r.access === 'subscription' ? 'res-access-sub' : ''}">${accessMap[r.access]}</span>
+      </span>
+    </div>`;
+  });
+
+  html += `<div class="sec-label">Interview questions — answer these by Friday</div>`;
+  w.interview.forEach(q => {
+    html += `<div class="iq"><span class="iq-prefix">Q:</span>${q}</div>`;
+  });
+
+  panel.innerHTML = html;
+}
+
+function toggleDone(idx) {
+  state.done[idx] = !state.done[idx];
+  renderWeekGrid(); renderSidebar(); renderDetailPanel(); updateStats(); saveState();
+}
+
+function toggleCheck(wIdx, tIdx, val) {
+  state.checked[wIdx][tIdx] = val;
+  document.querySelectorAll('.check-item')[tIdx]?.classList.toggle('is-checked', val);
+  renderWeekGrid(); renderSidebar(); updateStats(); saveState();
+}
+
+function renderResources() {
+  const labelText = {must:'Must-do', good:'Good supplement', opt:'Optional advanced'};
+  const accessMap = {free:'🆓 Free', book:'📖 Book/paid', subscription:'💳 Subscription'};
+  let html = '';
+  ALL_RESOURCES.forEach(section => {
+    html += `<div class="resource-topic">${section.topic}</div><div class="res-grid">`;
+    section.items.forEach(r => {
+      html += `<div class="res-card">
+        <div class="res-name">${r.name}</div>
+        <div class="res-why">${r.why}</div>
+        <div class="res-row">
+          <span class="res-label label-${r.label}">${labelText[r.label]}</span>
+          <span class="res-access ${r.access === 'subscription' ? 'res-access-sub' : ''}">${accessMap[r.access]}</span>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById('resources-content').innerHTML = html;
+}
+
+function renderProjects() {
+  let html = '';
+  PROJECTS.forEach(p => {
+    html += `<div class="proj-card">
+      <div class="proj-title">${p.title}</div>
+      <div class="proj-week">${p.week}</div>
+      <div class="proj-section">Why it matters</div>
+      <div class="proj-text">${p.relevance}</div>
+      <div class="proj-section">Required skills</div>
+      <div class="proj-text">${p.skills}</div>
+      <div class="proj-section">Implementation steps</div>`;
+    p.steps.forEach((s, i) => {
+      html += `<div class="proj-step"><div class="proj-step-num">${i+1}.</div><div>${s}</div></div>`;
+    });
+    html += `<div class="proj-section">Extensions</div>`;
+    p.extensions.forEach(e => { html += `<div class="ext-item">${e}</div>`; });
+    html += `<div class="proj-section">How to benchmark</div>
+      <div class="proj-text">${p.benchmark}</div>
+    </div>`;
+  });
+  document.getElementById('projects-content').innerHTML = html;
+}
+
+function renderDeliverables() {
+  document.getElementById('deliverables-content').innerHTML = `
+    <div class="deliverable">
+      <div class="deliverable-title">🏅 AWS Certified Cloud Practitioner (CLF-C02)</div>
+      <ul class="deliverable-list">
+        <li>Passed by end of Week 2 via AWS Skill Builder prep path</li>
+        <li>Certificate PDF saved; listed on LinkedIn profile and resume</li>
+        <li>Foundation for understanding cloud-hosted ML infrastructure in MLA-C01</li>
+      </ul>
+    </div>
+    <div class="deliverable">
+      <div class="deliverable-title">🎯 AWS Certified Machine Learning Engineer – Associate (MLA-C01)</div>
+      <ul class="deliverable-list">
+        <li>Passed by end of Week 8 via AWS Skill Builder prep path</li>
+        <li>Covers: SageMaker end-to-end, MLOps, data pipelines, model monitoring, security</li>
+        <li>Listed on LinkedIn; combined with CLF-C02, shows both cloud foundations and ML deployment depth</li>
+      </ul>
+    </div>
+    <div class="deliverable">
+      <div class="deliverable-title">🖥️ GitHub Repo 1: cpp-systems-fundamentals</div>
+      <ul class="deliverable-list">
+        <li>Custom memory allocators and smart pointer implementations (zero valgrind leaks)</li>
+        <li>Thread pool and producer-consumer queue with std::thread / std::mutex</li>
+        <li>MiniShell: complete POSIX shell (fork, exec, pipe, signals, redirects)</li>
+        <li>OS concepts markdown docs (virtual memory, scheduling, file systems)</li>
+        <li>Proper Makefile, README, CI badge, 15+ commits, recruiter-readable</li>
+      </ul>
+    </div>
+    <div class="deliverable">
+      <div class="deliverable-title">⚡ GitHub Repo 2: gpu-inference-optimizer</div>
+      <ul class="deliverable-list">
+        <li>CUDA kernels: vector add, naive matmul, tiled matmul — benchmarked vs cuBLAS</li>
+        <li>Quantization scripts: dynamic + static PTQ for ResNet-50 and DistilBERT</li>
+        <li>ONNX export and ONNX Runtime inference pipeline with validation</li>
+        <li>TensorRT FP32, FP16, INT8 engines — full benchmark table across all precision levels</li>
+        <li>Architecture diagram, Docker setup, Loom walkthrough video linked in README</li>
+      </ul>
+    </div>
+    <div class="deliverable">
+      <div class="deliverable-title">🎤 Verbal narrative — practice until effortless</div>
+      <ul class="deliverable-list">
+        <li>3-minute project summary deliverable without notes</li>
+        <li>Can answer all interview questions from Weeks 1–12</li>
+        <li>Resume updated: both certs listed, repos linked, one-line project descriptions</li>
+      </ul>
+    </div>
+    <div class="narrative-box">
+      <div class="narrative-label">Your 3-minute pitch — practice this out loud</div>
+      <div class="narrative-text">
+        "This summer I earned two AWS certifications: Cloud Practitioner and Machine Learning Engineer Associate, which gave me a solid understanding of how ML pipelines are built, deployed, and monitored in production on AWS. Alongside that, I built two technical projects. The first is a POSIX shell in C++ — it implements process management, piping, and signal handling, which taught me how the OS manages processes at the syscall level. The second is a GPU inference optimizer: I took a ResNet-50 model, applied post-training quantization and ONNX export, converted it to a TensorRT engine, and achieved an 8× latency reduction at INT8 versus the FP32 PyTorch baseline — the same kind of optimization that SageMaker's real-time inference endpoints use under the hood."
+      </div>
+    </div>`;
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    const ids = ['overview','resources','projects','deliverables'];
+    el.classList.toggle('active', ids[i] === id);
+  });
+  window.scrollTo(0,0);
+}
+
+loadState();
+renderWeekGrid(); renderSidebar(); renderResources(); renderProjects(); renderDeliverables(); updateStats();
+</script>
+</body>
+</html>
