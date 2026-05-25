@@ -49,7 +49,9 @@ Security?
 
 # Module 2: Compute in the Cloud (Amazon EC2)
 
-Amazon Elastic Compute Cloud
+Amazon Elastic Compute Cloud (compute-as-a-service)
+
+- You need to the choose EC2 instance type (how powerful you want it) and the Amazon Machine Image (AMI), which determines the operating system and software for your instance.
 
 - Multitenancy
   - sharing underlying hardware between virtual machines
@@ -60,3 +62,7 @@ Amazon Elastic Compute Cloud
   - web apps
   - databases
   - third-party software
+
+Instance Types
+
+-
