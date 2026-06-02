@@ -216,3 +216,146 @@ Putting it together
 - start with uploading container image to ECR
 - choose serveice based on needs: ECS or EKS
 - Select which compute platform to run container: EC2 or Fargate
+
+# Module 4: Networking
+
+Amazon Virtual Private Cloud (VPC)
+
+- logically isolated section of the AWS Cloud — your own private network
+- you define the IP address range, subnets, route tables, and gateways
+- resources inside a VPC are not accessible from the internet by default
+
+Subnets
+
+- Public subnet
+  - has a route to an Internet Gateway → resources can communicate with the internet
+  - e.g. web servers, load balancers
+- Private subnet
+  - no direct internet access
+  - e.g. databases, internal application servers
+
+Gateways and Connections
+
+- Internet Gateway (IGW)
+  - attaches to a VPC to allow traffic between the VPC and the internet
+  - required for resources in public subnets to be reachable
+- Virtual Private Gateway
+  - entry point for encrypted VPN connections from on-premises networks into the VPC
+  - traffic still travels over the public internet but is encrypted
+- AWS Direct Connect
+  - dedicated private physical connection from on-premises data center to AWS
+  - not over the public internet → lower latency, more consistent bandwidth
+  - good for high-throughput or compliance-sensitive workloads
+
+Network Traffic Filtering
+
+- Network Access Control Lists (NACLs)
+  - stateless: evaluates both inbound AND outbound rules independently
+  - applied at the subnet level — affects all resources within the subnet
+  - rules are evaluated in order (lowest number first); default allows all traffic
+- Security Groups
+  - stateful: if inbound traffic is allowed, the response is automatically allowed out
+  - applied at the instance/resource level
+  - default: deny all inbound, allow all outbound
+  - you add rules to explicitly allow traffic (cannot explicitly deny)
+
+| Feature | NACLs | Security Groups |
+|---|---|---|
+| Level | Subnet | Instance |
+| State | Stateless | Stateful |
+| Default | Allow all | Deny all inbound |
+
+Amazon Route 53 (DNS)
+
+- highly available and scalable Domain Name System (DNS) service
+- translates domain names (e.g. example.com) into IP addresses
+- also handles domain registration
+- Routing policies:
+  - Simple: route to a single resource
+  - Weighted: split traffic across multiple resources by percentage
+  - Latency-based: route to the region with lowest latency for the user
+  - Failover: route to a backup resource if the primary is unhealthy
+  - Geolocation: route based on user's geographic location
+
+Amazon CloudFront (CDN)
+
+- Content Delivery Network — caches content at Edge Locations around the world
+- reduces latency by serving content from the location closest to the user
+- works with S3, EC2, ELB, and custom origins
+- also provides DDoS protection via AWS Shield integration
+
+# Module 5: Storage and Databases
+
+Amazon Simple Storage Service (S3)
+
+- object storage — store any type of data as objects inside buckets
+- each object = data + metadata + unique key
+- virtually unlimited storage; maximum single object size is 5 TB
+- highly durable: data is automatically replicated across multiple AZs
+- Storage classes (choose based on access frequency):
+  - S3 Standard: frequently accessed data; high durability, stored across ≥3 AZs
+  - S3 Standard-IA (Infrequent Access): lower storage cost, retrieval fee applies
+  - S3 One Zone-IA: stored in a single AZ; cheaper, but less resilient
+  - S3 Intelligent-Tiering: automatically moves objects between tiers based on access patterns
+  - S3 Glacier Instant Retrieval: archive data, millisecond retrieval
+  - S3 Glacier Flexible Retrieval: archive, retrieval in minutes to hours
+  - S3 Glacier Deep Archive: lowest cost; retrieval within 12 hours; long-term retention
+
+Amazon Elastic Block Store (EBS)
+
+- block storage volumes attached to EC2 instances (like a hard drive for a server)
+- data persists independently from the EC2 instance lifecycle
+- can only be attached to one EC2 instance at a time (within the same AZ)
+- EBS Snapshots: point-in-time backups stored in S3; incremental (only changed blocks)
+
+Amazon Elastic File System (EFS)
+
+- managed NFS (Network File System) — shared file storage
+- multiple EC2 instances across multiple AZs can read/write simultaneously
+- scales automatically as files are added or removed — no provisioning needed
+- good for shared content, home directories, CMS workloads
+
+Amazon Relational Database Service (RDS)
+
+- fully managed relational database service
+- handles patching, backups, failover, and scaling automatically
+- supported engines: MySQL, PostgreSQL, MariaDB, Oracle, SQL Server, Amazon Aurora
+- Multi-AZ deployment: automatic standby replica in another AZ for high availability
+
+Amazon Aurora
+
+- AWS-built relational database; MySQL and PostgreSQL compatible
+- up to 5× faster than standard MySQL, 3× faster than PostgreSQL
+- replicates 6 copies of data across 3 AZs automatically
+- storage auto-scales up to 128 TB
+- good choice when you need high performance and AWS-native integration
+
+Amazon DynamoDB
+
+- fully managed, serverless NoSQL key-value and document database
+- single-digit millisecond response times at any scale
+- automatically scales throughput up and down based on demand
+- no schema — flexible data structure per item
+- good for high-traffic web apps, gaming leaderboards, IoT data
+
+Amazon Redshift
+
+- managed data warehousing service for large-scale analytics
+- designed for OLAP (Online Analytical Processing), not transactional workloads
+- can query petabytes of structured data
+- integrates with BI tools (Tableau, QuickSight)
+
+AWS Database Migration Service (DMS)
+
+- migrate databases to AWS with minimal downtime
+- source database remains fully operational during migration
+- supports homogeneous migrations (e.g. MySQL → RDS MySQL) and heterogeneous (e.g. Oracle → Aurora)
+- also used for continuous data replication and database consolidation
+
+Additional Storage Services
+
+- AWS Storage Gateway: hybrid storage — connects on-premises environments to AWS cloud storage
+- AWS Snow Family: physical devices for moving large amounts of data into/out of AWS when network transfer is impractical
+  - Snowcone: smallest, portable (up to 14 TB)
+  - Snowball Edge: larger (up to 80 TB), can run compute at edge locations
+  - Snowmobile: exabyte-scale data transfer via a shipping container
