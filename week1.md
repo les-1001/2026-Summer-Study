@@ -359,3 +359,126 @@ Additional Storage Services
   - Snowcone: smallest, portable (up to 14 TB)
   - Snowball Edge: larger (up to 80 TB), can run compute at edge locations
   - Snowmobile: exabyte-scale data transfer via a shipping container
+
+# Module 6: Security
+
+Shared Responsibility Model (revisited)
+
+- AWS: security OF the cloud (physical hardware, global infrastructure, managed service software)
+- Customer: security IN the cloud (data, IAM config, OS patching on EC2, encryption choices)
+- boundary shifts depending on service type — more managed = AWS takes more responsibility
+
+AWS Identity and Access Management (IAM)
+
+- Root user
+  - created when you first open an AWS account
+  - has full access to everything — do NOT use for everyday tasks
+  - enable MFA on root user immediately
+- IAM Users
+  - individual identities with credentials (username/password or access keys)
+  - by default, a new IAM user has NO permissions
+- IAM Groups
+  - collection of IAM users
+  - attach policies to the group — all members inherit those permissions
+- IAM Roles
+  - temporary identity assumed by a user, service, or application
+  - no permanent credentials — permissions are granted only while the role is assumed
+  - e.g. EC2 instance assumes a role to access S3 without hardcoding credentials
+- IAM Policies
+  - JSON documents that define allow/deny permissions for actions on resources
+  - principle of least privilege: grant only the permissions needed, nothing more
+- Multi-Factor Authentication (MFA)
+  - adds a second verification step (e.g. OTP from an authenticator app)
+  - should be enabled on root user and all privileged IAM users
+
+AWS Organizations
+
+- centrally manage multiple AWS accounts under one organisation
+- consolidated billing: single payment method for all accounts, volume discounts apply
+- Service Control Policies (SCPs): set permission guardrails across accounts or Organisational Units (OUs)
+  - SCPs do not grant permissions — they restrict what accounts can do even if IAM allows it
+- Organisational Units (OUs): group accounts by team, environment, or business unit (e.g. Dev OU, Prod OU)
+
+Compliance and Governance
+
+- AWS Artifact
+  - on-demand access to AWS compliance reports (SOC, ISO, PCI DSS, etc.)
+  - also manage agreements (e.g. BAA for HIPAA)
+- AWS CloudTrail
+  - logs every API call made in your account (who, what, when, from where)
+  - stored in S3; used for auditing, compliance, and incident investigation
+  - CloudTrail Insights: detects unusual activity automatically
+
+Threat Detection and Protection
+
+- AWS Shield
+  - protects against DDoS attacks
+  - Shield Standard: automatically enabled for all AWS customers, no extra cost
+  - Shield Advanced: paid tier; enhanced protection, 24/7 DDoS response team, cost protection
+- AWS WAF (Web Application Firewall)
+  - filters malicious HTTP/S traffic before it reaches your application
+  - blocks SQL injection, cross-site scripting (XSS), and custom rules
+  - works with CloudFront, ALB, API Gateway
+- Amazon GuardDuty
+  - intelligent threat detection using ML
+  - continuously monitors CloudTrail logs, VPC Flow Logs, and DNS logs
+  - detects things like unusual API calls, compromised instances, crypto-mining activity
+- Amazon Inspector
+  - automated security assessments for EC2 instances and container images
+  - checks for software vulnerabilities and unintended network exposure
+- Amazon Macie
+  - uses ML to discover, classify, and protect sensitive data in S3
+  - identifies PII (Personally Identifiable Information) and alerts on unusual access
+
+Encryption
+
+- AWS Key Management Service (KMS)
+  - create, manage, and control encryption keys
+  - integrates with most AWS services (S3, EBS, RDS, etc.)
+  - you control who can use which keys
+- Encryption at rest: data encrypted when stored (S3, EBS snapshots, RDS)
+- Encryption in transit: data encrypted while moving (TLS/SSL)
+
+# Module 7: Monitoring and Analytics
+
+Amazon CloudWatch
+
+- collect and track metrics from AWS resources and applications
+- set Alarms: trigger notifications or automated actions when a metric crosses a threshold
+  - e.g. alert when CPU > 80%, or auto-scale when request count spikes
+- CloudWatch Logs: collect, store, and search log files from EC2, Lambda, and other services
+- CloudWatch Dashboards: customisable real-time views of your metrics
+- CloudWatch Events / Amazon EventBridge: respond to state changes in AWS resources with automated actions
+
+AWS CloudTrail
+
+- records all API activity across your AWS account (already mentioned in Module 6)
+- key distinction from CloudWatch: CloudWatch = performance metrics; CloudTrail = who did what
+- Management events: operations on resources (e.g. create EC2, delete S3 bucket)
+- Data events: object-level operations (e.g. S3 GetObject, Lambda invocations)
+- Logs can be sent to S3 for long-term retention or CloudWatch Logs for real-time analysis
+
+AWS Trusted Advisor
+
+- automated tool that inspects your AWS environment and recommends improvements
+- checks across 5 categories:
+  1. Cost Optimisation: identify idle resources, unused reserved instances
+  2. Performance: check service limits, EC2 usage patterns
+  3. Security: open S3 buckets, unrestricted security group rules, MFA on root
+  4. Fault Tolerance: Multi-AZ usage, EBS snapshot age, auto scaling groups
+  5. Service Limits: warn when approaching AWS account limits
+- Basic checks: free for all accounts
+- Full checks: require Business or Enterprise Support plan
+
+AWS X-Ray
+
+- trace and analyse requests as they travel through distributed applications
+- helps identify bottlenecks and errors across microservices, Lambda, and APIs
+- generates a service map showing how components interact and where latency occurs
+
+Amazon EventBridge
+
+- serverless event bus — routes events between AWS services, SaaS apps, and custom apps
+- replaces and extends CloudWatch Events
+- event sources: AWS services, custom applications, partner SaaS (e.g. Zendesk, Shopify)
+- you define rules that match events and route them to targets (Lambda, SQS, Step Functions, etc.)
