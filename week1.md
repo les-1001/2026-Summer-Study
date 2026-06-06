@@ -285,18 +285,6 @@ Amazon CloudFront (CDN)
 - works with S3, EC2, ELB, and custom origins
 - also provides DDoS protection via AWS Shield integration
 
-Amazon Route 53 (DNS)
-
-- highly available and scalable Domain Name System (DNS) service
-- translates domain names (e.g. example.com) into IP addresses
-- also handles domain registration
-- Routing policies:
-  - Simple: route to a single resource
-  - Weighted: split traffic across multiple resources by percentage
-  - Latency-based: route to the Region with lowest latency for the user
-  - Failover: route to a backup resource if the primary is unhealthy
-  - Geolocation: route based on user's geographic location
-
 Cloud Formation
 
 - supports infrastructure as code (IaC), enabling consistent, repeateable deployments across different environments
@@ -310,23 +298,38 @@ Cloud Formation
 Amazon Virtual Private Cloud (VPC)
 
 - logically isolated section of the AWS Cloud — your own private network
+- can be public(accessibly to internet) or private
 - you define the IP address range, subnets, route tables, and gateways
 - resources inside a VPC are not accessible from the internet by default
 
 Subnets
 
+- a section of a VPC that groups resources based on security or operational needs
+- control traffic permissions
+  - Network Access Control List (Network ACL)
+    - stateless
+    - every package that crosses the subnet boundaries get checked against
+    - check if package has access to either enter/leave subnets
+    - does not check if package can reach specific instances
+  - security group
+    - stateful (has some kind of memory: who to allow/who not to)
+    - block all traffic trying to access instances unless specified
 - Public subnet
   - has a route to an Internet Gateway → resources can communicate with the internet
   - e.g. web servers, load balancers
 - Private subnet
   - no direct internet access
   - e.g. databases, internal application servers
+- inter-subnet communication
+  - you can define rules within a VPC to allow resources in different subnets to communicate
+  - e.g. EC2 instances in a public subnet communicating with databases in a private subnet
 
 Gateways and Connections
 
 - Internet Gateway (IGW)
   - attaches to a VPC to allow traffic between the VPC and the internet
   - required for resources in public subnets to be reachable
+  - doorway open to public
 - Virtual Private Gateway
   - entry point for encrypted VPN connections from on-premises networks into the VPC
   - traffic still travels over the public internet but is encrypted
@@ -335,87 +338,308 @@ Gateways and Connections
   - not over the public internet → lower latency, more consistent bandwidth
   - good for high-throughput or compliance-sensitive workloads
 
+VPN and Private Connectivity
+
+- AWS Client VPN
+  - managed, client-based VPN service that lets individual users (remote workers, employees) securely connect to AWS resources or on-premises networks from any location
+  - uses OpenVPN-based protocol; users install a VPN client on their device
+  - authentication options: certificate-based, Active Directory, or SAML 2.0 (federated SSO)
+  - when to use:
+    - remote workforce needs secure access to AWS resources or a corporate network
+    - replacing traditional on-premises VPN concentrators
+    - BYOD (bring your own device) scenarios where per-user access control is needed
+
+- AWS Site-to-Site VPN
+  - creates an encrypted IPSec tunnel between an entire on-premises network and an AWS VPC over the public internet
+  - AWS side: Virtual Private Gateway (VGW) or AWS Transit Gateway; on-premises side: Customer Gateway device
+  - provides two tunnels automatically for redundancy
+  - when to use:
+    - connecting an entire office or data center network to AWS (network-to-network, not user-to-network)
+    - quick, cost-effective hybrid connectivity when dedicated lines are not needed
+    - lower-bandwidth workloads or as an encrypted backup path for AWS Direct Connect
+
+- AWS PrivateLink
+  - establishes private connectivity from a VPC to AWS services or your own services without traffic ever traversing the public internet
+  - uses Interface VPC Endpoints (ENIs in your subnet) powered by PrivateLink, and Gateway Endpoints for S3 and DynamoDB
+  - traffic stays entirely within the AWS network backbone
+  - when to use:
+    - accessing AWS services (S3, DynamoDB, API Gateway, etc.) from a VPC without a public internet route
+    - exposing your own service to other VPCs or AWS accounts privately (avoid VPC peering for service access)
+    - SaaS providers exposing services to customers without granting full VPC access
+    - compliance requirements that prohibit any public internet traffic
+
+- AWS Direct Connect
+  - dedicated private physical fiber connection from your on-premises data center to AWS — does not travel over the public internet
+  - available at 1 Gbps, 10 Gbps, and 100 Gbps; lower speeds available via AWS Partner hosted connections
+  - provides consistent latency and predictable throughput, unlike internet-based VPNs
+  - when to use:
+    - high-throughput workloads such as large data transfers, media production, or database replication
+    - compliance or regulatory requirements that mandate traffic must not cross the public internet
+    - hybrid architectures with sustained, heavy traffic between on-premises and AWS
+    - can be combined with Site-to-Site VPN to add encryption over the Direct Connect link
+
+Network Traffic in a VPC
+
+- data moves through a VPC as packets — a unit of data sent over the internet or a network
+- incoming request journey: client → public internet → Internet Gateway → NACL check at subnet boundary → subnet → Security Group check → resource (EC2 instance)
+- two permission checkpoints before a packet reaches a resource:
+  1. Network ACL: at the subnet boundary — checks who sent the packet and how it's trying to communicate
+  2. Security Group: at the instance level — final check before the packet reaches the resource
+
 Network Traffic Filtering
 
 - Network Access Control Lists (NACLs)
-  - stateless: evaluates both inbound AND outbound rules independently
-  - applied at the subnet level — affects all resources within the subnet
-  - rules are evaluated in order (lowest number first); default allows all traffic
+  - virtual firewall that checks packets crossing the subnet boundary in both directions
+  - stateless: remembers nothing — each packet is evaluated against the rules independently, both inbound and outbound, every time
+  - rules are evaluated in order (lowest number first)
+  - default NACL: allows all inbound and outbound traffic
+  - custom NACLs: deny all traffic by default until you add explicit allow rules
+  - has an explicit catch-all deny rule: any packet that doesn't match a rule is denied
 - Security Groups
-  - stateful: if inbound traffic is allowed, the response is automatically allowed out
-  - applied at the instance/resource level
+  - virtual firewall at the individual resource level (e.g. each EC2 instance)
+  - stateful: remembers previous decisions — if a packet was allowed in, the response is automatically allowed out regardless of outbound rules
   - default: deny all inbound, allow all outbound
-  - you add rules to explicitly allow traffic (cannot explicitly deny)
+  - only allow rules — you cannot add explicit deny rules (unmatched traffic is denied by default)
+  - multiple EC2 instances within the same VPC can share a security group or have separate ones
 
-| Feature | NACLs     | Security Groups  |
-| ------- | --------- | ---------------- |
-| Level   | Subnet    | Instance         |
-| State   | Stateless | Stateful         |
-| Default | Allow all | Deny all inbound |
+| Feature        | NACLs                                  | Security Groups                      |
+| -------------- | -------------------------------------- | ------------------------------------ |
+| Scope          | Subnet level                           | Instance level                       |
+| State          | Stateless                              | Stateful                             |
+| Rule types     | Allow and deny rules                   | Allow rules only                     |
+| Return traffic | Must be explicitly allowed             | Automatically allowed                |
+| Default        | Allow all (default); Deny all (custom) | Deny all inbound, allow all outbound |
+
+Amazon Route 53 (DNS)
+
+- highly available and scalable Domain Name System (DNS) service
+- translates domain names (e.g. example.com) into IP addresses
+- also handles domain registration
+- Routing policies:
+  - Simple: route to a single resource
+  - Weighted round robin: split traffic across multiple resources by percentage
+  - Latency-based: route to the Region with lowest latency for the user
+  - Failover: route to a backup resource if the primary is unhealthy
+  - Geolocation: route based on user's geographic location
+
+VPN vs AWS Direct connect
+
+- VPN
+  - secure, flexible, remote access, small-scale, dedicated connection isnt necessary
+- AWS Direct connect
+  - High bandwidth, low latency, consistent performance, large data transfer, critical applications
+- Both
+  - VPN as failover of direct connect
+
+Company that needs to deliver content globally
+
+- Route 53 --> Amazon CloudFront --> respective regions
+- route 53 determine which region is closest to user and directs to appropriate cloudfront edge location
+- edge location fetches content
 
 # Module 6: Storage
 
-Amazon Simple Storage Service (S3)
+Types of Storage
+
+- Block Storage (ideal for applications that need quick and frequent updates)
+  - Data divided into pieces called blocks
+  - direct data access without file system layers
+  - best for applications/databases needing fast, frequent updates
+- object Storage
+  - Object = data + unique ID + metadata
+  - full rewrite required to update an object
+  - organized using buckets
+  - best for large or infrequently changed files
+- File storage
+  - cloud-based access through shared file systems
+  - straightforward implementation without code changes
+  - best for applications needing shared file access
+
+Amazon Simple Storage Service (S3): Object Storage
 
 - object storage — store any type of data as objects inside buckets
 - each object = data + metadata + unique key
-- virtually unlimited storage; maximum single object size is 5 TB
+- virtually unlimited storage
+- maximum single object size is 5 TB
+- create multiple objects
+- version objects (data back-ups)
 - highly durable: data is automatically replicated across multiple AZs
-- Storage classes (choose based on access frequency):
-  - S3 Standard: frequently accessed data; high durability, stored across ≥3 AZs
-  - S3 Standard-IA (Infrequent Access): lower storage cost, retrieval fee applies
-  - S3 One Zone-IA: stored in a single AZ; cheaper, but less resilient
-  - S3 Intelligent-Tiering: automatically moves objects between tiers based on access patterns
-  - S3 Glacier Instant Retrieval: archive data, millisecond retrieval
-  - S3 Glacier Flexible Retrieval: archive, retrieval in minutes to hours
-  - S3 Glacier Deep Archive: lowest cost; retrieval within 12 hours; long-term retention
+- Amazon S3 Security
+  - private access by default
+  - bucket policies
+  - presigned URLs (temporary access), time limited
+  - Amazon S3 access points
+  - Amazon S3 audit logs (track every access)
+- Storage classes (choose based on access frequency) --> designed for diff storage needs, can have multiple storage classes in a single bucket
+  - S3 Standard
+    - frequently accessed data; high durability, stored across ≥3 AZs
+  - S3 Standard-IA (Infrequent Access)
+    - lower storage cost, retrieval fee applies (good for back-up data)
+  - S3 One Zone-IA
+    - stored in a single AZ; cheaper, but less resilient
+  - S3 Glacier Instant Retrieval
+    - archive data, millisecond retrieval
+  - S3 Glacier Flexible Retrieval
+    - archive, retrieval in minutes to hours
+  - S3 Glacier Deep Archive
+    - lowest cost; retrieval within 12 hours; long-term retention
+  - S3 Intelligent-Tiering
+    - automatically moves objects between tiers based on access patterns
+    - frequent access, infrequent access, archive instant, acess deep archive
+- S3 Lifecycle Policies: automation rule to delete/move data we can set up
+  - S3 Storage Class Analysis
+- Static website hosting: upload HTML, CSS, JS, and media files to a bucket, enable static web hosting → instant website
+  - automatically scales to handle any amount of traffic
+  - pay only for storage used and data transferred out
+  - NOT suitable for databases — not designed for rapid, continuous rewrite operations (use EBS for that)
 
-Amazon Elastic Block Store (EBS)
+Amazon Elastic Block Store (EBS): Block Storage
 
 - block storage volumes attached to EC2 instances (like a hard drive for a server)
 - data persists independently from the EC2 instance lifecycle
 - can only be attached to one EC2 instance at a time (within the same AZ)
-- EBS Snapshots: point-in-time backups stored in S3; incremental (only changed blocks)
+- performance measured in Input/output per second (IOPS)
+- different volume types exist — choose based on workload:
+  - Provisioned IOPS SSD: highest performance, for mission-critical apps like databases
+- ideal for relational databases on EC2 — block-level access is essential for database read/write operations
+- EBS Snapshots:
+  - point-in-time backups stored in S3
+  - can be done daily, weekly, monthly etc
+  - can do incremental backup --> only copies what has changed
+    - makes snapshots faster and more storage efficient
+- Amazon Data Lifecycle Manager
+  - schedule automatic snapshot creation
+  - set retention policies
+  - manage snapshot lifecycle
+  - apply consistent backup policies
 
 Amazon Elastic File System (EFS)
 
 - managed NFS (Network File System) — shared file storage
 - multiple EC2 instances across multiple AZs can read/write simultaneously
-- scales automatically as files are added or removed — no provisioning needed
-- good for shared content, home directories, CMS workloads
+- scales automatically (up to petabytes) as files are added or removed — no provisioning needed
+- low latency with high aggregate throughput and IOPS
+- good for shared content, home directories, CMS workloads, large media files (images, video), real-time multi-location access
+
+EFS vs EBS
+
+- EBS: like a hardrive
+  - volumes attach to EC2 instances
+  - Availability Zone level resources
+  - need to be in the same Availability Zone to attach EC2 instances
+  - volume do not automatically scale
+- EFS
+  - Multiple instances reading and writing simultaneously
+  - Linux file system
+  - Regional Resource
+  - Automatically scales
+
+Amazon FSx
+
+- fully managed, high-performance file systems in the cloud
+- supports multiple filesystem protocols (unlike EFS which focus on Network File System only)
+- handles hardware provisioning, patching, and backups automatically
+- built on latest AWS compute, networking, and disk technologies for high performance and lower TCO
+
+| File System                 | Protocol                 | Best For                                           |
+| --------------------------- | ------------------------ | -------------------------------------------------- |
+| FSx for Windows File Server | SMB (Windows)            | Windows workloads, SQL Server, virtual desktops    |
+| FSx for NetApp ONTAP        | NFS, SMB, iSCSI          | Hybrid workloads, modern apps, business continuity |
+| FSx for OpenZFS             | NFS (v3, v4, v4.1, v4.2) | Data analytics, content management, dev/test       |
+| FSx for Lustre              | Lustre                   | ML, HPC, big data analytics, media workloads       |
+
+- FSx for Windows File Server use cases:
+  - migrate Windows file servers to AWS
+  - accelerate hybrid workloads
+  - reduce SQL Server deployment cost
+  - streamline virtual desktops and streaming
+- FSx for NetApp ONTAP use cases:
+  - migrate workloads to AWS seamlessly
+  - modernize data management
+  - streamline business continuity
+- FSx for OpenZFS use cases:
+  - deliver insights faster for data analytics
+  - accelerate content management
+  - increase dev/test velocity
+- FSx for Lustre use cases:
+  - accelerate machine learning (ML)
+  - enable high performance computing (HPC)
+  - unlock big data analytics
+  - increase media workload agility
 
 Additional Storage Services
 
-- AWS Storage Gateway: hybrid storage — connects on-premises environments to AWS cloud storage
+- AWS Storage Gateway:
+  - hybrid storage — connects on-premises environments to AWS cloud storage
+  - Good for disaster recovery, data archiving
+    - S3 File Gateway
+      - appears to local systems as a standard file server using familiar file protocols
+      - files written are automatically uploaded to S3; recently used data cached locally for low latency
+      - on-premises apps get access to virtually unlimited cloud storage without code changes
+    - Volume Gateway: presents cloud data as iSCSI volumes mountable by existing applications
+      - Cached volume mode: primary data stored in the cloud, frequently accessed data cached locally
+      - Stored volume mode: complete dataset kept locally, asynchronously backed up to AWS as EBS snapshots
+    - Tape Gateway
+      - replaces physical tape infrastructure with virtual tape backed by S3
+      - presents itself to backup software as standard tape hardware — no changes needed to existing backup workflows
+      - can automatically transition infrequently accessed tapes to a cheaper storage class for long-term retention
 - AWS Snow Family: physical devices for moving large amounts of data into/out of AWS when network transfer is impractical
   - Snowcone: smallest, portable (up to 14 TB)
   - Snowball Edge: larger (up to 80 TB), can run compute at edge locations
   - Snowmobile: exabyte-scale data transfer via a shipping container
 
+Elastic Disaster Recovery
+
+- continuously replicates servers' block-level data to AWS for rapid recovery during disruptions
+- supports both physical and virtual servers
+- minimises downtime and data loss without the cost of maintaining a secondary data center
+- non-disruptive disaster recovery testing — can launch recovery instances at any time to validate procedures
+- Benefits:
+  - business resilience
+  - streamlined disaster recovery
+  - cost optimisation (eliminates secondary data center)
+- Use cases:
+  - Healthcare: replicate on-premises servers to AWS to protect patient records and meet compliance requirements
+  - Financial services: continuously replicate transaction processing systems so a bank can quickly recover if its primary data center fails
+  - Manufacturing: replicate factory management servers to protect production planning and minimise supply chain disruption
+
 # Module 7: Databases
 
 Amazon Relational Database Service (RDS)
 
+- automated patching, backups, redundancy, failover, and disaster recovery
 - fully managed relational database service
-- handles patching, backups, failover, and scaling automatically
-- supported engines: MySQL, PostgreSQL, MariaDB, Oracle, SQL Server, Amazon Aurora
-- Multi-AZ deployment: automatic standby replica in another AZ for high availability
+- Querying relational data
+  - MySQL, PostgreSQL, MariaDB, Oracle, SQL Server, Amazon Aurora
+- Multi-AZ deployment
+  - automatic standby replica in another AZ for high availability
 
 Amazon Aurora
 
-- AWS-built relational database; MySQL and PostgreSQL compatible
+- managed relational database designed to help reduce unnecessary I/O operations.
+- offers up to five times the throughput of standard MySQL while maintaining compatibility
+- PostgreSQL, MySQL, DSQL
+- up to 15 Aurora Replicas across AZs
+- AWS backup support
 - up to 5× faster than standard MySQL, 3× faster than PostgreSQL
-- replicates 6 copies of data across 3 AZs automatically
 - storage auto-scales up to 128 TB
 - good choice when you need high performance and AWS-native integration
 
-Amazon DynamoDB
+Amazon DynamoDB (non-relational)
 
+- data = items = set of attributes
+- attribute = name + value
+- add/remove attributes at any time
 - fully managed, serverless NoSQL key-value and document database
+  - stored in non-relational
+  - no schema — flexible data structure per item
 - single-digit millisecond response times at any scale
 - automatically scales throughput up and down based on demand
-- no schema — flexible data structure per item
 - good for high-traffic web apps, gaming leaderboards, IoT data
+- DynamoDB Global Tables
+  - e.g. Amazon prime day
+  - tens of trillions of calls
+  - 146 million requests/second
 
 Amazon Redshift
 
@@ -430,6 +654,57 @@ AWS Database Migration Service (DMS)
 - source database remains fully operational during migration
 - supports homogeneous migrations (e.g. MySQL → RDS MySQL) and heterogeneous (e.g. Oracle → Aurora)
 - also used for continuous data replication and database consolidation
+
+In-Memory Caching Services
+
+- Data caching
+  - stored in system memory (cache)
+  - near-instantaneous access
+  - redis OSS, Valkey, Memcached
+- Amazon ElastiCache
+  - fully managed in-memory caching service
+    automates key management tasks
+  - dramatically reduces database load by caching frequently read data in memory
+  - supports two engines:
+    - Redis: supports persistence, replication, pub/sub, sorted sets — good for leaderboards, sessions, queues
+    - Memcached: simple, multi-threaded, pure caching — good for large-scale horizontal scaling
+  - sub-millisecond response times
+  - use cases: session management, real-time leaderboards, database query caching, rate limiting
+  - reduce operational overhead
+  - cost-optimization tool for database
+- Amazon MemoryDB for Redis
+  - durable, Redis-compatible in-memory database (not just a cache)
+  - data persists across restarts — data stored in a Multi-AZ transaction log
+  - use when you need Redis speed AND durability as the primary database, not just a cache layer
+
+Additional Database Services
+
+- Amazon DocumentDB (MongoDB compatible)
+  - handle semistructured data
+    - information that doesn't conform to rigid relational schemas
+  - fully managed document database
+  - stores, queries, and indexes JSON data
+  - good for content management, user profiles, catalogs
+- Amazon Keyspaces (for Apache Cassandra)
+  - managed, serverless Cassandra-compatible database
+  - wide-column store; ideal for high-throughput, time-series, and IoT workloads
+  - no servers to manage; scales automatically
+- Amazon Neptune
+  - fully managed GRAPH database
+  - optimised for storing and querying highly connected data (nodes and relationships)
+  - use cases:
+    - social networks, fraud detection, knowledge graphs, recommendation engines
+- Amazon Timestream
+  - fully managed, serverless time series database
+  - purpose-built for data that changes over time (IoT sensor data, application metrics, server logs)
+  - automatically scales and moves older data to cheaper storage tiers
+- Amazon QLDB (Quantum Ledger Database)
+  - fully managed ledger database with an immutable, cryptographically verifiable transaction log
+  - every change is recorded permanently — cannot be altered or deleted
+  - use cases:
+    - financial transactions, supply chain tracking, audit trails, compliance records
+- AWS backup
+  - streamlines data protection across various AWS resources and on-premises deployments by providing a single dashboard for monitoring and managing backups
 
 # Module 8: AI ML and Data Analytics
 
